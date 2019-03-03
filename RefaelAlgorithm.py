@@ -5,7 +5,6 @@ import itertools
 from math import sqrt
 import heapq
 
-# obstacles = [((3, 4), (8, 6)), ((1, 3), (7, 4))]
 obstacles = [((3, 4), (8, 6)), ((2, 5), (8, 15)), ((1, 3), (7, 4))]
 
 
@@ -16,7 +15,7 @@ class Vertice:
         self.d = 'inf'
         self.path = []
 
-    def __lt__(self, other):
+    def __lt__(self, other):  # for integrating with heapq
         if other.d != 'inf' and self.d != 'inf':
             return self.d < other.d
         else:
@@ -53,9 +52,10 @@ class Graph:
     def collided_path(self, vertice1, vertice2):
         if vertice1 == vertice2:
             return True
-        return any([self.check_if_collide_rectangle(vertice1, vertice2, obstacle) for obstacle in obstacles])
+        # return any([self.check_if_collide_rectangle(vertice1, vertice2, obstacle) for obstacle in obstacles])
+        return self.check_if_collide_rectangle(vertice1, vertice2)
 
-    def check_if_collide_rectangle(self, vertice1, vertice2, obstacle):
+    def check_if_collide_rectangle(self, vertice1, vertice2):
         return any(
             [self.check_if_collide_vertices(vertice1, vertice2, edge.start, edge.end) for edge in self.edges])
 
@@ -124,17 +124,17 @@ class Graph:
             if i == target_vertice:
                 return i
 
-    def make_vertices_from_obstacles(self, obstacles):
+    @staticmethod
+    def make_vertices_from_obstacles(obstacles_l):
         vertices_list = []
-        for obstacle in obstacles:
+        for obstacle in obstacles_l:
             vertices_list = set().union(obstacle.get_vertices, vertices_list)
         return vertices_list
 
-    def make_edges_obstacles(self, obstacles):
+    def make_edges_obstacles(self, obstacles_l):
         self.edges = []
         i = 0
-        for obstacle in obstacles:
-            # self.adjacency_list[obstacle.left_bottom] = [obstacle.left_top, obstacle.right_bottom]
+        for obstacle in obstacles_l:
             self.add_edge_and_update_adjacency_list(obstacle.left_bottom, obstacle.left_top)
             self.add_edge_and_update_adjacency_list(obstacle.left_bottom, obstacle.right_bottom)
             self.add_edge_and_update_adjacency_list(obstacle.right_bottom, obstacle.right_top)
@@ -169,4 +169,3 @@ for obs in obstacles:
     obstacles_object_list.append(Obstacle(*obs[0], *obs[1]))
 graph = Graph(obstacles_object_list, (1, 1), (19, 8))
 s = graph.dijkstra()
-ohad = "ohad"
