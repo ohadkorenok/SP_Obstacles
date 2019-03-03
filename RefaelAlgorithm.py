@@ -4,11 +4,16 @@
 import itertools
 from math import sqrt
 import heapq
+from ast import literal_eval
 
 obstacles = [((3, 4), (8, 6)), ((2, 5), (8, 15)), ((1, 3), (7, 4))]
 
 
 class Vertice:
+    """
+    This class represents a vertice. It is very convinient for our dijkstra use.
+    """
+
     def __init__(self, x1, y1):
         self.x = x1
         self.y = y1
@@ -24,8 +29,15 @@ class Vertice:
             else:
                 return False
 
+    def __str__(self):
+        return "({},{}), distance : {}, path : {}".format(self.x, self.y, self.d, str([(i.x, i.y) for i in self.path]))
+
 
 class Obstacle:
+    """
+    This class gets 4 coordinates that represents a rectangle obstacle.
+    """
+
     def __init__(self, x1, y1, x2, y2):
         self.left_bottom = (x1, y1)
         self.left_top = (x1, y2)
@@ -38,9 +50,17 @@ class Obstacle:
 
 
 class Graph:
+    """
+    The graph's vertices is all of the corners of the rectangles, and the two points given (source, target) .
+    The edges of the graph are between every two vertices that doesn't cross the obstacles.
+    """
 
     def make_edges(self, vertices):
-
+        """
+        In this function , we try to make all of the possible edges between all of the vertices of the graph, if the
+        path is clear (and not blocked by an obstacle).
+        :param vertices: A list of all of the coordinates (Not Vertice Objects)
+        """
         for element in itertools.product(vertices, vertices):
             if self.collided_path(*element) is False and (
                     len(self.adjacency_list[element[0]]['group_id']) == 0 or len(
@@ -50,20 +70,44 @@ class Graph:
                 self.add_edge_and_update_adjacency_list(element[0], element[1])
 
     def collided_path(self, vertice1, vertice2):
+        """
+        This function returns a boolean if the way from vertice1 to vertice2 is blocked.
+        :param vertice1: tuple represents a coordinate
+        :param vertice2: tuple represents a coordinate
+        :return: True if the way is blocked, False if the way is clear.
+        """
         if vertice1 == vertice2:
             return True
-        # return any([self.check_if_collide_rectangle(vertice1, vertice2, obstacle) for obstacle in obstacles])
         return self.check_if_collide_rectangle(vertice1, vertice2)
 
     def check_if_collide_rectangle(self, vertice1, vertice2):
+        """
+        This function returns a boolean if the way from vertice1 to vertice2 is blocked, by any edge of the graph.
+        :param vertice1: tuple represents a coordinate
+        :param vertice2: tuple represents a coordinate
+        :return: True if the way is blocked by any edge of the graph, False if the way is clear.
+        """
         return any(
             [self.check_if_collide_vertices(vertice1, vertice2, edge.start, edge.end) for edge in self.edges])
 
     def check_if_collide_vertices(self, vertice1, vertice2, vertice3, vertice4):
+        """
+        This method returns a boolean if the edge from v1 to v2 collides with the edge from v3 to v4.
+        :param vertice1: tuple represents a coordinate
+        :param vertice2: tuple represents a coordinate
+        :param vertice3: tuple represents a coordinate
+        :param vertice4: tuple represents a coordinate
+        :return: True if the edges collide, False if they are not.
+        """
         return self.check_if_collide(vertice1[0], vertice1[1], vertice2[0], vertice2[1], vertice3[0], vertice3[1],
                                      vertice4[0], vertice4[1])
 
     def check_if_collide(self, x1, y1, x2, y2, x3, y3, x4, y4):
+        """
+        This method checks if the line between the points (x1,y1) , (x2,y2) and the line between the point (x3,y3)(x4,y4)
+         intersects.  If so, return True.
+        :return: True if collide, False if not.
+        """
         try:
             vertices_set = {(x1, y1), (x2, y2), (x3, y3), (x4, y4)}
             if 4 == len(vertices_set):
@@ -89,6 +133,10 @@ class Graph:
         self.make_edges(self.vertices)
 
     def relax(self, neighbor_vertice, original_vertice, distance):
+        """
+        Relax function from Dijstkra algorithm .
+        :return:
+        """
         if neighbor_vertice.d == 'inf':
             return
         if original_vertice.d == 'inf' and neighbor_vertice != 'inf' or original_vertice.d > neighbor_vertice.d + distance:
@@ -126,6 +174,11 @@ class Graph:
 
     @staticmethod
     def make_vertices_from_obstacles(obstacles_l):
+        """
+        Build the rectangles from the obstacles.
+        :param obstacles_l:
+        :return:
+        """
         vertices_list = []
         for obstacle in obstacles_l:
             vertices_list = set().union(obstacle.get_vertices, vertices_list)
@@ -164,8 +217,13 @@ class Edge:
         self.distance = self.compute_distance(start, end)
 
 
+with open("input.txt", "r") as file:
+    string = file.readline()[:-1]
+    obstacle_l = literal_eval(string)
+    source_target = literal_eval(file.readline())
 obstacles_object_list = []
-for obs in obstacles:
+for obs in obstacle_l:
     obstacles_object_list.append(Obstacle(*obs[0], *obs[1]))
-graph = Graph(obstacles_object_list, (1, 1), (19, 8))
+graph = Graph(obstacles_object_list, source_target[0], source_target[1])
 s = graph.dijkstra()
+print(s)
